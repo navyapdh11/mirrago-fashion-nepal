@@ -49,7 +49,10 @@ jobs:
       run: vendor/bin/phpunit --bootstrap vendor/autoload.php tests/Unit
 
     - name: Run PHP syntax check
-      run: find app/ -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
+      run: |
+        ERRORS=$(find app/ -name "*.php" -exec php -l {} \; | grep -v "No syntax errors" || true)
+        if [ -n "$ERRORS" ]; then echo "$ERRORS"; exit 1; fi
+        echo "All PHP files passed syntax check"
 
     - name: Generate application key
       run: cp .env.example .env && php artisan key:generate
