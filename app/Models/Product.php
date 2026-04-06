@@ -124,14 +124,4 @@ class Product extends Model
 
         return round((($this->compare_price - $this->price) / $this->compare_price) * 100, 2);
     }
-
-    public function getStyleTagsAttribute(?string $value): array
-    {
-        return $value !== null ? json_decode($value, true) : [];
-    }
-
-    public function getOccasionTagsAttribute(?string $value): array
-    {
-        return $value !== null ? json_decode($value, true) : [];
-    }
 }

@@ -17,7 +17,9 @@ class ProductController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        \Log::info('Product index called');
         $query = Product::query()->active();
+        \Log::info('Product count before filters: ' . $query->count());
 
         if ($request->filled('category')) {
             $query->byCategory($request->string('category'));

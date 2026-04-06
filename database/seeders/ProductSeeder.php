@@ -27,8 +27,9 @@ class ProductSeeder extends Seeder
                 'price' => 850.00,
                 'compare_price' => 1200.00,
                 'primary_image_url' => 'https://example.com/images/dhaka-topi.jpg',
-                'style_tags' => json_encode(['traditional', 'ethnic', 'formal']),
-                'occasion_tags' => json_encode(['festival', 'wedding', 'office']),
+                'style_tags' => ['traditional', 'ethnic', 'formal'],
+                'occasion_tags' => ['festival', 'wedding', 'office'],
+                'is_active' => true,
             ],
             [
                 'name' => "Men's Classic Daura Suruwal",
@@ -42,8 +43,9 @@ class ProductSeeder extends Seeder
                 'price' => 3500.00,
                 'compare_price' => 4500.00,
                 'primary_image_url' => 'https://example.com/images/daura-suruwal.jpg',
-                'style_tags' => json_encode(['traditional', 'formal', 'ethnic']),
-                'occasion_tags' => json_encode(['wedding', 'festival', 'office', 'ceremony']),
+                'style_tags' => ['traditional', 'formal', 'ethnic'],
+                'occasion_tags' => ['wedding', 'festival', 'office', 'ceremony'],
+                'is_active' => true,
             ],
             [
                 'name' => "Women's Kurtha Suruwal Set",
@@ -57,8 +59,9 @@ class ProductSeeder extends Seeder
                 'price' => 2800.00,
                 'compare_price' => 3500.00,
                 'primary_image_url' => 'https://example.com/images/kurtha-suruwal.jpg',
-                'style_tags' => json_encode(['traditional', 'elegant', 'embroidered']),
-                'occasion_tags' => json_encode(['festival', 'wedding', 'party']),
+                'style_tags' => ['traditional', 'elegant', 'embroidered'],
+                'occasion_tags' => ['festival', 'wedding', 'party'],
+                'is_active' => true,
             ],
             [
                 'name' => 'Casual Denim Jacket',
@@ -72,8 +75,9 @@ class ProductSeeder extends Seeder
                 'price' => 2200.00,
                 'compare_price' => 2800.00,
                 'primary_image_url' => 'https://example.com/images/denim-jacket.jpg',
-                'style_tags' => json_encode(['casual', 'trendy', 'western']),
-                'occasion_tags' => json_encode(['casual', 'outing', 'date']),
+                'style_tags' => ['casual', 'trendy', 'western'],
+                'occasion_tags' => ['casual', 'outing', 'date'],
+                'is_active' => true,
             ],
             [
                 'name' => "Women's Saree - Silk Collection",
@@ -87,8 +91,9 @@ class ProductSeeder extends Seeder
                 'price' => 4500.00,
                 'compare_price' => 5500.00,
                 'primary_image_url' => 'https://example.com/images/silk-saree.jpg',
-                'style_tags' => json_encode(['elegant', 'traditional', 'luxury']),
-                'occasion_tags' => json_encode(['wedding', 'festival', 'party']),
+                'style_tags' => ['elegant', 'traditional', 'luxury'],
+                'occasion_tags' => ['wedding', 'festival', 'party'],
+                'is_active' => true,
             ],
             [
                 'name' => "Men's T-Shirt - Nepal Print",
@@ -102,8 +107,9 @@ class ProductSeeder extends Seeder
                 'price' => 750.00,
                 'compare_price' => 999.00,
                 'primary_image_url' => 'https://example.com/images/nepal-tshirt.jpg',
-                'style_tags' => json_encode(['casual', 'trendy', 'graphic']),
-                'occasion_tags' => json_encode(['casual', 'daily']),
+                'style_tags' => ['casual', 'trendy', 'graphic'],
+                'occasion_tags' => ['casual', 'daily'],
+                'is_active' => true,
             ],
             [
                 'name' => "Women's Lehenga Choli",
@@ -117,8 +123,9 @@ class ProductSeeder extends Seeder
                 'price' => 6500.00,
                 'compare_price' => 8000.00,
                 'primary_image_url' => 'https://example.com/images/lehenga-choli.jpg',
-                'style_tags' => json_encode(['luxury', 'traditional', 'bridal']),
-                'occasion_tags' => json_encode(['wedding', 'festival']),
+                'style_tags' => ['luxury', 'traditional', 'bridal'],
+                'occasion_tags' => ['wedding', 'festival'],
+                'is_active' => true,
             ],
             [
                 'name' => "Men's Formal Pants",
@@ -132,35 +139,46 @@ class ProductSeeder extends Seeder
                 'price' => 1500.00,
                 'compare_price' => 1999.00,
                 'primary_image_url' => 'https://example.com/images/formal-pants.jpg',
-                'style_tags' => json_encode(['formal', 'classic', 'office']),
-                'occasion_tags' => json_encode(['office', 'formal', 'ceremony']),
+                'style_tags' => ['formal', 'classic', 'office'],
+                'occasion_tags' => ['office', 'formal', 'ceremony'],
+                'is_active' => true,
             ],
         ];
 
         foreach ($products as $productData) {
-            $product = Product::create($productData);
+            $product = Product::updateOrCreate(
+                ['sku' => $productData['sku']],
+                $productData
+            );
 
             // Create variants for sizes
             foreach (['S', 'M', 'L', 'XL', 'XXL'] as $size) {
-                $variant = ProductVariant::create([
-                    'product_id' => $product->id,
-                    'sku' => $product->sku . '-' . $size,
-                    'size' => $size,
-                    'color' => $product->color,
-                    'price' => $product->price,
-                    'image_url' => $product->primary_image_url,
-                    'is_active' => true,
-                ]);
+                $variant = ProductVariant::updateOrCreate(
+                    ['sku' => $productData['sku'] . '-' . $size],
+                    [
+                        'product_id' => $product->id,
+                        'sku' => $productData['sku'] . '-' . $size,
+                        'size' => $size,
+                        'color' => $productData['color'],
+                        'price' => $productData['price'],
+                        'image_url' => $productData['primary_image_url'],
+                        'is_active' => true,
+                    ]
+                );
 
                 // Create inventory levels for each warehouse
                 foreach ($warehouses as $warehouse) {
-                    InventoryLevel::create([
-                        'product_variant_id' => $variant->id,
-                        'warehouse_id' => $warehouse->id,
-                        'stock_qty' => rand(10, 100),
-                        'reserved_qty' => 0,
-                        'reorder_level' => 10,
-                    ]);
+                    InventoryLevel::updateOrCreate(
+                        [
+                            'product_variant_id' => $variant->id,
+                            'warehouse_id' => $warehouse->id,
+                        ],
+                        [
+                            'stock_qty' => rand(10, 100),
+                            'reserved_qty' => 0,
+                            'reorder_level' => 10,
+                        ]
+                    );
                 }
             }
 

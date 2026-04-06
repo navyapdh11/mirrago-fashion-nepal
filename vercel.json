@@ -1,0 +1,41 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "api/**/*.php",
+            "use": "vercel-php@0.7.3"
+        },
+        {
+            "src": "public/**/*.php",
+            "use": "vercel-php@0.7.3"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/public/index.php"
+        }
+    ],
+    "env": {
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "DB_CONNECTION": "sqlite",
+        "DB_DATABASE": "/tmp/database.sqlite",
+        "CACHE_DRIVER": "file",
+        "CACHE_STORE": "file",
+        "SESSION_DRIVER": "cookie",
+        "QUEUE_CONNECTION": "sync",
+        "LOG_CHANNEL": "stderr",
+        "VIEW_COMPILED_PATH": "/tmp/views",
+        "LARAVEL_STORAGE_PATH": "/tmp/storage"
+    },
+    "build": {
+        "env": {
+            "APP_KEY": "base64:YOUR_KEY_HERE"
+        }
+    }
+}
