@@ -80,3 +80,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // User recommendations (authenticated for better results)
     Route::get('/user/recommendations', [ProductController::class, 'recommendations']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile API Routes
+|--------------------------------------------------------------------------
+*/
+
+$registerMobileRoutes = require __DIR__.'/mobile.php';
+$registerMobileRoutes(Route::getFacadeRoot());
