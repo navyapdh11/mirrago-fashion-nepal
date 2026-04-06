@@ -18,3 +18,11 @@ yarn-error.log
 /.vscode
 database/database.sqlite
 .vercel
+
+# Exclude runtime files
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+!storage/logs/.gitignore
