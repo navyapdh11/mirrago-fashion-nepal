@@ -37,9 +37,11 @@ export class KairosTickLoop {
   private config: TickLoopConfig;
   private running: boolean = false;
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private firstTickTimeout: ReturnType<typeof setTimeout> | null = null;
   private state: SessionState | null = null;
   private products: Product[] = [];
   private observations: Observation[] = [];
+  private consecutiveFailures: number = 0;
   private onAction?: (action: TickAction) => void;
   private onLog?: (message: string) => void;
 
@@ -72,7 +74,7 @@ export class KairosTickLoop {
     }, this.config.intervalMs);
 
     // Run first tick immediately
-    setTimeout(() => this.tick(), 1000);
+    this.firstTickTimeout = setTimeout(() => this.tick(), 1000);
   }
 
   stop(): void {
@@ -80,6 +82,10 @@ export class KairosTickLoop {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+    }
+    if (this.firstTickTimeout) {
+      clearTimeout(this.firstTickTimeout);
+      this.firstTickTimeout = null;
     }
     this.log('Tick loop stopped');
   }
@@ -130,6 +136,11 @@ export class KairosTickLoop {
 
     } catch (error) {
       console.error('[TickLoop] Error during tick:', error);
+      this.consecutiveFailures++;
+      if (this.consecutiveFailures >= 5) {
+        this.log(`Circuit breaker tripped after ${this.consecutiveFailures} failures. Stopping.`);
+        this.stop();
+      }
     }
 
     const duration = Date.now() - tickStart;
@@ -395,4 +406,11 @@ export function getTickLoop(): KairosTickLoop {
     tickLoopInstance = new KairosTickLoop();
   }
   return tickLoopInstance;
+}
+
+export function resetTickLoop(): void {
+  if (tickLoopInstance) {
+    tickLoopInstance.stop();
+    tickLoopInstance = null;
+  }
 }

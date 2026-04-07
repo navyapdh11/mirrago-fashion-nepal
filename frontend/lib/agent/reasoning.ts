@@ -18,17 +18,12 @@ import {
   Product,
   UserPreferenceProfile,
   StyleContext,
+  ChainOfThoughtRef,
+  TreeOfThoughtRef,
+  GraphOfThoughtRef,
+  ReasoningResult as ReasoningResultType,
 } from './types';
-
-// Helper to get all tags from a product
-function getTags(product: Product): string[] {
-  return [...(product.style_tags || []), ...(product.occasion_tags || [])];
-}
-
-// Helper to check if product is trending (using discount as proxy since is_trending doesn't exist)
-function isTrending(product: Product): boolean {
-  return !!product.discount_percentage && product.discount_percentage > 15;
-}
+import { getTags, isTrending, isOccasion } from './utils';
 
 // ============================================
 // Chain-of-Thought (CoT) Reasoning
@@ -487,11 +482,6 @@ function calculateComplementStrength(a: Product, b: Product): number {
   return Math.min(strength, 1.0);
 }
 
-function isOccasion(tag: string): boolean {
-  const occasions = ['wedding', 'casual', 'formal', 'party', 'office', 'gym', 'outdoor', 'evening'];
-  return occasions.includes(tag.toLowerCase());
-}
-
 function detectClusters(nodes: GoTNode[], edges: GoTEdge[], clusters: GoTCluster[]): void {
   // Simple clustering: group products by shared style/occasion nodes
   const styleNodes = nodes.filter(n => n.type === 'style' || n.type === 'occasion');
@@ -517,15 +507,6 @@ function detectClusters(nodes: GoTNode[], edges: GoTEdge[], clusters: GoTCluster
 // Unified Reasoning Interface
 // ============================================
 
-export interface ReasoningResult {
-  cot?: ChainOfThought;
-  tot?: TreeOfThought;
-  got?: GraphOfThought;
-  recommendation: string;
-  alternatives: string[];
-  confidence: number;
-}
-
 export async function generateReasoning(
   product: Product,
   allProducts: Product[],
@@ -533,43 +514,52 @@ export async function generateReasoning(
   styleContext: StyleContext,
   enableToT: boolean = true,
   enableGoT: boolean = true
-): Promise<ReasoningResult> {
-  // Chain-of-Thought (always enabled for explanations)
-  const cot = generateChainOfThought(product, preferences, styleContext, []);
+): Promise<ReasoningResultType> {
+  try {
+    // Chain-of-Thought (always enabled for explanations)
+    const cot = generateChainOfThought(product, preferences, styleContext, []);
 
-  // Tree-of-Thought (for alternatives exploration)
-  let tot: TreeOfThought | undefined;
-  if (enableToT) {
-    tot = buildTreeOfThought(allProducts, preferences, styleContext);
-  }
+    // Tree-of-Thought (for alternatives exploration)
+    let tot: TreeOfThought | undefined;
+    if (enableToT && allProducts.length > 0) {
+      tot = buildTreeOfThought(allProducts, preferences, styleContext);
+    }
 
-  // Graph-of-Thought (for relationship mapping)
-  let got: GraphOfThought | undefined;
-  if (enableGoT) {
-    got = buildGraphOfThought(allProducts, preferences, String(product.id));
-  }
+    // Graph-of-Thought (for relationship mapping)
+    let got: GraphOfThought | undefined;
+    if (enableGoT && allProducts.length > 0) {
+      got = buildGraphOfThought(allProducts, preferences, String(product.id));
+    }
 
-  // Extract alternatives from ToT
-  const alternatives: string[] = [];
-  if (tot) {
-    for (const branch of tot.branches.slice(0, 3)) {
-      const leafId = branch.path[branch.path.length - 1];
-      if (leafId.startsWith('prod_')) {
-        const prodId = leafId.replace('prod_', '');
-        const prod = allProducts.find(p => String(p.id) === prodId);
-        if (prod && String(prod.id) !== String(product.id)) {
-          alternatives.push(prod.name);
+    // Extract alternatives from ToT
+    const alternatives: string[] = [];
+    if (tot) {
+      for (const branch of tot.branches.slice(0, 3)) {
+        const leafId = branch.path[branch.path.length - 1];
+        if (leafId.startsWith('prod_')) {
+          const prodId = leafId.replace('prod_', '');
+          const prod = allProducts.find(p => String(p.id) === prodId);
+          if (prod && String(prod.id) !== String(product.id)) {
+            alternatives.push(prod.name);
+          }
         }
       }
     }
-  }
 
-  return {
-    cot,
-    tot,
-    got,
-    recommendation: cot.conclusion,
-    alternatives,
-    confidence: cot.confidence,
-  };
+    return {
+      cot: cot ? { steps: cot.steps, conclusion: cot.conclusion, confidence: cot.confidence } : undefined,
+      tot: tot ? { root: { id: tot.root.id, thought: tot.root.thought, score: tot.root.score }, branches: tot.branches.map(b => ({ id: b.id, path: b.path, terminalScore: b.terminalScore })), selectedPath: tot.selectedPath } : undefined,
+      got: got ? { nodes: got.nodes.map(n => ({ id: n.id, concept: n.concept, type: n.type, weight: n.weight })), edges: got.edges.map(e => ({ source: e.source, target: e.target, relation: e.relation, strength: e.strength })), clusters: got.clusters.map(c => ({ id: c.id, name: c.name, nodeIds: c.nodeIds })) } : undefined,
+      recommendation: cot.conclusion,
+      alternatives,
+      confidence: cot.confidence,
+    };
+  } catch (error) {
+    console.error('[Reasoning] Error generating reasoning:', error);
+    return {
+      recommendation: `Recommended: ${product.name}`,
+      alternatives: [],
+      confidence: 0.3,
+    };
+  }
 }

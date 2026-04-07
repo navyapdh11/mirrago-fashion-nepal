@@ -15,6 +15,7 @@ import {
   Product,
   UserPreferenceProfile,
 } from './types';
+import { isColor, isOccasion, isStyle } from './utils';
 
 // ============================================
 // Intent Classification
@@ -394,21 +395,6 @@ function extractProductFacets(product: Product): Record<string, string[]> {
     style: [...(product.style_tags || []), ...(product.occasion_tags || [])].filter(t => isStyle(t)),
   };
   return facets;
-}
-
-function isColor(tag: string): boolean {
-  const colors = ['red', 'blue', 'black', 'white', 'green', 'yellow', 'pink', 'purple', 'brown', 'gray', 'grey', 'orange', 'navy', 'beige'];
-  return colors.includes(tag.toLowerCase());
-}
-
-function isOccasion(tag: string): boolean {
-  const occasions = ['wedding', 'party', 'office', 'work', 'formal', 'casual', 'gym', 'outdoor', 'evening', 'interview', 'date'];
-  return occasions.includes(tag.toLowerCase());
-}
-
-function isStyle(tag: string): boolean {
-  const styles = ['modern', 'vintage', 'classic', 'minimal', 'sporty', 'elegant', 'trendy', 'bohemian', 'streetwear'];
-  return styles.includes(tag.toLowerCase());
 }
 
 function generateSuggestions(

@@ -72,9 +72,16 @@ export function hasAllTags(product: Product, tags: string[]): boolean {
 }
 
 /**
+ * Check if product is trending (discount as proxy)
+ */
+export function isTrending(product: Product): boolean {
+  return !!product.discount_percentage && product.discount_percentage > 15;
+}
+
+/**
  * Normalize product for comparison
  */
-export function normalizeProduct(product: Product): Product {
+export function normalizeProductInput(product: Product): Product {
   return {
     ...product,
     tags: getTags(product),
@@ -140,7 +147,7 @@ export function sortByDiscount(products: Product[]): Product[] {
  * Get trending products
  */
 export function getTrendingProducts(products: Product[]): Product[] {
-  return products.filter(p => p.is_trending);
+  return products.filter(p => isTrending(p));
 }
 
 /**
@@ -148,4 +155,24 @@ export function getTrendingProducts(products: Product[]): Product[] {
  */
 export function getInStockProducts(products: Product[]): Product[] {
   return products.filter(p => p.stock_status !== 'out_of_stock');
+}
+
+// ============================================
+// Tag classification helpers (used by oasisSearch & reasoning)
+// ============================================
+
+const COLOR_TAGS = ['red', 'blue', 'black', 'white', 'green', 'yellow', 'pink', 'purple', 'brown', 'gray', 'grey', 'orange', 'navy', 'beige'];
+const OCCASION_TAGS = ['wedding', 'party', 'office', 'work', 'formal', 'casual', 'gym', 'outdoor', 'evening', 'interview', 'date'];
+const STYLE_TAGS = ['modern', 'vintage', 'classic', 'minimal', 'sporty', 'elegant', 'trendy', 'bohemian', 'streetwear'];
+
+export function isColor(tag: string): boolean {
+  return COLOR_TAGS.includes(tag.toLowerCase());
+}
+
+export function isOccasion(tag: string): boolean {
+  return OCCASION_TAGS.includes(tag.toLowerCase());
+}
+
+export function isStyle(tag: string): boolean {
+  return STYLE_TAGS.includes(tag.toLowerCase());
 }

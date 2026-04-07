@@ -12,14 +12,7 @@ import {
   UserPreferenceProfile,
   StyleContext,
 } from './types';
-
-// Helpers
-function getTags(product: Product): string[] {
-  return [...(product.style_tags || []), ...(product.occasion_tags || [])];
-}
-function isTrending(product: Product): boolean {
-  return !!product.discount_percentage && product.discount_percentage > 15;
-}
+import { getTags, isTrending } from './utils';
 
 // ============================================
 // MCTS Implementation for Recommendations
@@ -47,6 +40,11 @@ export function runMCTS(
   styleContext: StyleContext,
   config: Partial<MCTSConfig> = {}
 ): MCTSResult {
+  // Guard: empty product catalog
+  if (products.length === 0) {
+    return { selectedPath: [], totalValue: 0, simulationCount: 0, confidence: 0 };
+  }
+
   const cfg = { ...DEFAULT_CONFIG, ...config };
   
   // Initialize root node
@@ -249,6 +247,7 @@ function pickBestForRollout(
   candidates: Product[],
   preferences: UserPreferenceProfile
 ): Product {
+  if (candidates.length === 0) throw new Error('No candidates available for rollout');
   return candidates.reduce((best, p) => {
     const score = calculateProductFit(p, preferences);
     const bestScore = calculateProductFit(best, preferences);

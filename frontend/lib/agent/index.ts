@@ -24,7 +24,8 @@ import {
   trackShoppingEvent,
   updatePreferences,
 } from './contextManager';
-import { generateReasoning, ReasoningResult as ReasoningResultType } from './reasoning';
+import { generateReasoning } from './reasoning';
+import type { ReasoningResult as ReasoningResultType } from './types';
 import { runMCTS, getMCTSRecommendations } from './mcts';
 import { searchProducts, parseQuery, executeOasisSearch } from './oasisSearch';
 import { runAutoDream, shouldTriggerAutoDream, loadConsolidatedProfile } from './autoDream';
@@ -107,10 +108,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),
@@ -164,10 +165,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),
@@ -271,10 +272,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),
@@ -341,10 +342,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),
@@ -380,10 +381,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),
@@ -429,10 +430,10 @@ export class MirragoAgent {
           reasoningApplied,
         },
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         metadata: {
           duration: Date.now() - start,
           tokensUsed: getTotalTokens(this.state),

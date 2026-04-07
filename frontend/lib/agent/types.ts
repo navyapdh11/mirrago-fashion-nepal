@@ -336,11 +336,31 @@ export interface AgentFeatureFlags {
 }
 
 // --- Reasoning Result (cross-module) ---
+// Forward declarations to avoid circular imports.
+// The actual implementations are in reasoning.ts.
+
+export interface ChainOfThoughtRef {
+  steps: Array<{ step: number; reasoning: string; evidence: string[] }>;
+  conclusion: string;
+  confidence: number;
+}
+
+export interface TreeOfThoughtRef {
+  root: { id: string; thought: string; score: number };
+  branches: Array<{ id: string; path: string[]; terminalScore: number }>;
+  selectedPath: string[];
+}
+
+export interface GraphOfThoughtRef {
+  nodes: Array<{ id: string; concept: string; type: string; weight: number }>;
+  edges: Array<{ source: string; target: string; relation: string; strength: number }>;
+  clusters: Array<{ id: string; name: string; nodeIds: string[] }>;
+}
 
 export interface ReasoningResult {
-  cot?: any;  // ChainOfThought
-  tot?: any;  // TreeOfThought
-  got?: any;  // GraphOfThought
+  cot?: ChainOfThoughtRef;
+  tot?: TreeOfThoughtRef;
+  got?: GraphOfThoughtRef;
   recommendation: string;
   alternatives: string[];
   confidence: number;
