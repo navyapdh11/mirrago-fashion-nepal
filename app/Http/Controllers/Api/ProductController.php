@@ -87,4 +87,27 @@ class ProductController extends Controller
 
         return response()->json($recommendations);
     }
+
+    public function trackEvent(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer',
+            'event_type' => 'required|string|in:view,click,add_to_cart,purchase,wishlist,share',
+            'user_id' => 'nullable|integer',
+            'session_id' => 'nullable|string',
+            'metadata' => 'nullable|array',
+        ]);
+
+        $sessionId = $validated['session_id'] ?? $request->header('X-Session-Id', 'anon-'.bin2hex(random_bytes(8)));
+
+        $this->recommendationService->trackEvent(
+            $validated['user_id'] ?? $request->user()?->id,
+            $sessionId,
+            $validated['event_type'],
+            $validated['product_id'],
+            $validated['metadata'] ?? []
+        );
+
+        return response()->json(['status' => 'tracked']);
+    }
 }

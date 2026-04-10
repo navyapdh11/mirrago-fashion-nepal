@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\MirragoController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,9 @@ Route::get('/products/{id}/frequently-bought-together', [ProductController::clas
 Route::get('/products/{id}/shop-the-look', [ProductController::class, 'shopTheLook']);
 Route::get('/products/recommendations', [ProductController::class, 'recommendations']);
 
+// AI Recommendations tracking (public)
+Route::post('/recommendations/track', [ProductController::class, 'trackEvent']);
+
 // Inventory (public read)
 Route::get('/inventory', [InventoryController::class, 'index']);
 Route::get('/inventory/variant/{productVariantId}/stock', [InventoryController::class, 'checkStock']);
@@ -39,6 +43,12 @@ Route::post('/mirrago/try-on/{productSlug}', [MirragoController::class, 'tryOn']
 Route::get('/mirrago/status/{sessionId}', [MirragoController::class, 'tryOnStatus']);
 Route::post('/mirrago/webhook', [MirragoController::class, 'webhook']);
 Route::get('/mirrago/deep-link/{productSlug}', [MirragoController::class, 'deepLink']);
+
+// Analytics (public read)
+Route::get('/analytics', [AnalyticsController::class, 'index']);
+Route::get('/analytics/dashboard', [AnalyticsController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/analytics/revenue', [AnalyticsController::class, 'revenue']);
+Route::get('/analytics/products', [AnalyticsController::class, 'products']);
 
 // Payment callbacks (public - called by gateways)
 Route::post('/payments/esewa/callback', [PaymentController::class, 'esewaCallback'])->name('payment.esewa.callback');
