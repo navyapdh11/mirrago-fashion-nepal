@@ -1,0 +1,8 @@
+# Code Owners
+# Defines who is responsible for code review in PRs
+
+* @navyapdh11
+
+/frontend/ @navyapdh11
+/app/ @navyapdh11
+/.github/ @navyapdh11
