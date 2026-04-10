@@ -16,11 +16,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already logged in
-  if (isAuthenticated) {
-    router.push('/');
-    return null;
-  }
+  // Redirect if already logged in (using useEffect to avoid Rules of Hooks violation)
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

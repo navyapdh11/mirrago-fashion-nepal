@@ -1256,3 +1256,7 @@
 [2026-04-07 18:59:46] production.INFO: Product count before filters: 8  
 [2026-04-07 19:00:04] production.INFO: Product index called  
 [2026-04-07 19:00:04] production.INFO: Product count before filters: 8  
+[2026-04-10 11:57:43] production.INFO: Product index called  
+[2026-04-10 11:57:43] production.INFO: Product count before filters: 8  
+[2026-04-10 11:57:57] production.INFO: Product index called  
+[2026-04-10 11:57:57] production.INFO: Product count before filters: 8  
