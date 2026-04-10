@@ -3,12 +3,21 @@ import Image from 'next/image';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
-  product: Product;
+  product: Product | {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    compare_price: number | null;
+    category: string;
+    primary_image_url: string | null;
+    style_tags?: string[];
+  };
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const discount = product.compare_price 
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100) 
+  const discount = product.compare_price
+    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
     : 0;
 
   return (

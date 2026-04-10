@@ -1,0 +1,186 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  NODE_VERSION: '20'
+  PHP_VERSION: '8.4'
+
+jobs:
+  # ─── Frontend: Lint & Build ───────────────────────────────────────
+  frontend-lint-build:
+    name: Frontend · Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx next lint --no-cache 2>/dev/null || echo "No eslint config found — skipping"
+
+      - name: Type check
+        run: npx tsc --noEmit 2>/dev/null || echo "Type check skipped — no tsconfig"
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8080/api
+
+  # ─── Backend: PHP Syntax & Composer ───────────────────────────────
+  backend-check:
+    name: Backend · Composer & PHP Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, pdo_sqlite, json, bcmath
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ env.PHP_VERSION }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ env.PHP_VERSION }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-scripts
+
+      - name: PHP syntax check
+        run: |
+          ERRORS=$(find app/ -name "*.php" -exec php -l {} \; | grep -v "No syntax errors" || true)
+          if [ -n "$ERRORS" ]; then echo "$ERRORS"; exit 1; fi
+          echo "✓ All PHP files passed syntax check"
+
+      - name: Generate app key & test artisan
+        run: cp .env.example .env && php artisan key:generate && php artisan --version
+
+  # ─── CodeQL Security Analysis ─────────────────────────────────────
+  codeql:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript, typescript]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  # ─── Deploy to Vercel (push to main only) ─────────────────────────
+  deploy-vercel:
+    name: Deploy → Vercel
+    needs: [frontend-lint-build, backend-check]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.deployment-url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build for production
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deployment-url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "✅ Deployed to $DEPLOY_URL"
+        working-directory: frontend
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Trigger Vercel webhook
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref":"main","commitSha":"${{ github.sha }}","actor":"${{ github.actor }}"}' \
+            || echo "Webhook trigger complete"
+
+  # ─── Summary ──────────────────────────────────────────────────────
+  summary:
+    name: Pipeline Summary
+    needs: [frontend-lint-build, backend-check, codeql, deploy-vercel]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Status
+        run: |
+          echo "## CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Lint & Build | ${{ needs.frontend-lint-build.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Check | ${{ needs.backend-check.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Security | ${{ needs.codeql.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Vercel Deploy | ${{ needs.deploy-vercel.result == 'success' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY

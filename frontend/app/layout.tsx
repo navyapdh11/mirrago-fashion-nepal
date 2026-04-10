@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -24,12 +24,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-sans min-h-screen flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <body className="font-sans min-h-screen bg-gray-50" style={{ fontFamily: 'Inter, sans-serif' }}>
         <CartProvider>
           <AuthProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex-1 flex flex-col">
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+            </div>
             <AIAssistantWrapper />
           </AuthProvider>
         </CartProvider>

@@ -1,83 +1,222 @@
-# Mirrago Fashion Nepal - Frontend
+# Mirrago Fashion Nepal - Setup & Deployment Guide
 
-Next.js 13 frontend for Nepal's AI-powered fashion e-commerce platform.
+AI-powered multi-warehouse e-commerce platform for the Nepalese market.
 
-## Tech Stack
+## 🚀 Quick Start
 
-- **Framework:** Next.js 13.5 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **API:** Laravel Backend (port 8080)
+### Prerequisites
 
-## Getting Started
+**Backend (Laravel):**
+- PHP 8.2+
+- Composer
+- SQLite or MySQL
+
+**Frontend (Next.js):**
+- Node.js 18+
+- npm or yarn
+
+### Local Setup
+
+#### 1. Backend Setup
 
 ```bash
-# Install dependencies
+# Navigate to project root
+cd /data/data/com.termux/files/home/app
+
+# Install PHP dependencies
+composer install
+
+# Configure environment
+cp .env.example .env
+php artisan key:generate
+
+# Run migrations
+php artisan migrate
+
+# Seed database with sample data
+php artisan db:seed
+
+# Start Laravel development server
+php artisan serve --host=127.0.0.1 --port=8080
+```
+
+#### 2. Frontend Setup
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install Node dependencies
 npm install
 
-# Run development server
+# Configure environment
+cp .env.local.example .env.local
+
+# Update API URL in .env.local
+# NEXT_PUBLIC_API_URL=http://127.0.0.1:8080/api
+
+# Start Next.js development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
+The application will be available at:
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://127.0.0.1:8080/api
 
-## Project Structure
+## 📦 Deployment
+
+### Vercel Deployment (Frontend)
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Deploy:**
+   ```bash
+   cd frontend
+   vercel --prod
+   ```
+
+3. **Set Environment Variables:**
+   - Go to Vercel Dashboard → Project Settings → Environment Variables
+   - Add: `NEXT_PUBLIC_API_URL=https://your-api-url.com/api`
+
+4. **Rebuild:**
+   ```bash
+   vercel --prod
+   ```
+
+### Vercel Deployment (Backend - Laravel)
+
+The backend is configured for Vercel deployment using `vercel-php`.
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Deploy:**
+   ```bash
+   vercel --prod
+   ```
+
+3. **Configure Environment Variables in Vercel:**
+   - `APP_KEY` - Generate with `php artisan key:generate --show`
+   - `DB_CONNECTION` - sqlite
+   - `DB_DATABASE` - /tmp/database.sqlite
+   - `ESEWA_MERCHANT_ID` - Your eSewa merchant ID
+   - `ESEWA_SECRET_KEY` - Your eSewa secret key
+   - `KHALTI_PUBLIC_KEY` - Your Khalti public key
+   - `KHALTI_SECRET_KEY` - Your Khalti secret key
+   - `MIRRAGO_API_KEY` - Your Mirrago API key
+
+## 🔧 Configuration
+
+### Payment Gateways
+
+**eSewa:**
+- Update `.env` with your eSewa credentials
+- Test mode: `https://rc-epay.esewa.com.np`
+- Production: `https://epay.esewa.com.np`
+
+**Khalti:**
+- Update `.env` with your Khalti credentials
+- Test mode: `https://a.khalti.com`
+- Production: Same URL with live keys
+
+### AI Features (Mirrago)
+
+- Sign up at [Mirrago](https://mirrago.com)
+- Get API key and update `.env`
+- Configure webhook URL for real-time updates
+
+## 📊 Features
+
+### Frontend
+- ✅ Product catalog with search & filtering
+- ✅ Product details with AI recommendations
+- ✅ Virtual Try-On (Mirrago AI)
+- ✅ Shopping cart with persistent storage
+- ✅ Checkout with shipping validation
+- ✅ Order tracking & confirmation
+- ✅ User profile & order history
+- ✅ Analytics dashboard
+- ✅ Responsive design (mobile-first)
+
+### Backend
+- ✅ RESTful API (Laravel Sanctum auth)
+- ✅ Product & inventory management
+- ✅ Order processing & tracking
+- ✅ Payment integration (eSewa & Khalti)
+- ✅ Payment failover mechanism
+- ✅ AI recommendation engine
+- ✅ Virtual try-on integration
+- ✅ Analytics & reporting
+- ✅ Multi-warehouse inventory
+
+## 🧪 Testing
+
+```bash
+# Backend tests
+cd /data/data/com.termux/files/home/app
+php artisan test
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+## 📁 Project Structure
 
 ```
-frontend/
-├── app/
-│   ├── layout.tsx          # Root layout with metadata
-│   ├── page.tsx            # Homepage
-│   ├── globals.css         # Global styles
-│   ├── products/
-│   │   ├── page.tsx        # Product catalog
-│   │   └── [slug]/page.tsx # Product detail
-│   ├── cart/page.tsx       # Shopping cart
-│   └── checkout/page.tsx   # Checkout
-├── components/
-│   ├── Header.tsx          # Navigation header
-│   ├── Footer.tsx          # Site footer
-│   ├── ProductCard.tsx     # Product card component
-│   └── ProductGrid.tsx     # Product grid
-├── lib/
-│   └── api.ts              # API client for Laravel backend
-├── types/
-│   └── index.ts            # TypeScript type definitions
-└── public/                 # Static assets
+app/
+├── app/                    # Laravel application
+│   ├── Http/Controllers/Api/  # API controllers
+│   ├── Models/                # Eloquent models
+│   └── Services/              # Domain services
+├── database/
+│   ├── migrations/            # Database migrations
+│   └── seeders/               # Database seeders
+├── frontend/               # Next.js frontend
+│   ├── app/                   # App router pages
+│   ├── components/            # React components
+│   ├── context/               # React contexts (Auth, Cart)
+│   └── lib/                   # Utilities & API client
+└── public/                 # Public assets
 ```
 
-## API Integration
+## 🔐 Security
 
-The frontend connects to the Laravel backend at `http://127.0.0.1:8080/api`.
+- Change all default API keys before production
+- Enable HTTPS in production
+- Configure CORS properly
+- Use environment variables for sensitive data
+- Enable rate limiting on API endpoints
 
-Configure in `.env.local`:
-```
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8080/api
-```
+## 📝 API Documentation
 
-## Design System
+### Public Endpoints
+- `GET /api/products` - List products
+- `GET /api/products/{slug}` - Product details
+- `GET /api/products/trending` - Trending products
+- `POST /api/auth/register` - Register user
+- `POST /api/auth/login` - Login user
 
-Colors are Nepal-themed:
-- **Red:** `#DC143C` (Crimson)
-- **Blue:** `#003893` (Nepal Blue)
+### Authenticated Endpoints
+- `POST /api/orders` - Create order
+- `GET /api/orders` - User orders
+- `GET /api/orders/{id}` - Order details
+- `GET /api/user/recommendations` - AI recommendations
+- `POST /api/mirrago/try-on/{slug}` - Virtual try-on
 
-## Pages
+## 🤝 Support
 
-| Route | Description |
-|-------|-------------|
-| `/` | Homepage with hero, features, product grid |
-| `/products` | Product catalog with filtering |
-| `/products/[slug]` | Product detail page |
-| `/cart` | Shopping cart |
-| `/checkout` | Checkout with payment selection |
+For issues or questions:
+- Create an issue on GitHub
+- Check API documentation
+- Review environment variables in `.env.example`
 
----
+## 📄 License
 
-Built with ❤️ in Nepal 🇳🇵
+MIT License

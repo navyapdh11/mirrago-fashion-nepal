@@ -120,7 +120,7 @@ export default function VirtualTryOn({ productSlug, productName, productImageUrl
     if (!tryOnImage) return;
 
     const link = document.createElement('a');
-    link.href = tryOn_image;
+    link.href = tryOnImage;
     link.download = `tryon-${productSlug}.png`;
     link.click();
   };
