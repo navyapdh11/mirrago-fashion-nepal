@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -16,8 +16,8 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Redirect if already logged in (using useEffect to avoid Rules of Hooks violation)
-  React.useEffect(() => {
+  // Redirect if already logged in
+  useEffect(() => {
     if (isAuthenticated) {
       router.push('/');
     }

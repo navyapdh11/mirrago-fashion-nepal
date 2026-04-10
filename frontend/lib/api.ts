@@ -112,6 +112,42 @@ export const api = {
     },
   },
   
+  // AI Features
+  ai: {
+    // Recommendations
+    recommendations: {
+      track: (data: { user_id?: number; session_id?: string; event_type: string; product_id: number; metadata?: any }) =>
+        fetchAPI(`/recommendations/track`, { method: 'POST', body: data }),
+
+      getPersonalized: (token?: string) =>
+        fetchAPI<Product[]>(`/user/recommendations`, token ? { token } : undefined),
+
+      getFrequentlyBoughtTogether: (productId: number) =>
+        fetchAPI<Product[]>(`/products/${productId}/frequently-bought-together`),
+
+      getShopTheLook: (productId: number) =>
+        fetchAPI<Product[]>(`/products/${productId}/shop-the-look`),
+
+      getCartUpsell: (productIds: number[], token?: string) =>
+        fetchAPI<Product[]>(`/products/cart-upsell?ids=${productIds.join(',')}`, token ? { token } : undefined),
+    },
+
+    // Virtual Try-On
+    tryOn: {
+      initiate: (productSlug: string, userPhotoBase64?: string) =>
+        fetchAPI<{ session_id: string; status: string; estimated_time: number }>(`/mirrago/try-on/${productSlug}`, {
+          method: 'POST',
+          body: { user_photo: userPhotoBase64 },
+        }),
+
+      checkStatus: (sessionId: string) =>
+        fetchAPI<{ status: string; tryon_image?: string; error_message?: string }>(`/mirrago/status/${sessionId}`),
+
+      getDeepLink: (productSlug: string, color?: string) =>
+        fetchAPI<{ deep_link: string }>(`/mirrago/deep-link/${productSlug}${color ? `?color=${color}` : ''}`),
+    },
+  },
+
   // Health check
   health: () =>
     fetchAPI<{ status: string; timestamp: string }>(`/health`),

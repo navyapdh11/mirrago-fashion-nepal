@@ -7,6 +7,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import VirtualTryOn from '@/components/VirtualTryOn';
+import ProductRecommendations from '@/components/ProductRecommendations';
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   try {
@@ -70,6 +72,13 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           discount={discount}
         />
       </div>
+
+      {/* AI Recommendations */}
+      <ProductRecommendations
+        productId={product.id}
+        productSlug={product.slug}
+        category={product.category}
+      />
     </div>
   );
 }
@@ -152,11 +161,18 @@ function ProductDetails({ product, variants, discount }: {
       <button
         type="button"
         onClick={handleAddToCart}
-        className="w-full bg-nepal-red text-white py-4 rounded-lg font-semibold hover:bg-nepal-crimson transition flex items-center justify-center gap-2"
+        className="w-full bg-nepal-red text-white py-4 rounded-lg font-semibold hover:bg-nepal-crimson transition flex items-center justify-center gap-2 mb-3"
       >
         <ShoppingCart className="w-5 h-5" />
         {addedToCart ? '✓ Added to Cart!' : 'Add to Cart'}
       </button>
+
+      {/* Virtual Try-On */}
+      <VirtualTryOn
+        productSlug={product.slug}
+        productName={product.name}
+        productImageUrl={product.primary_image_url}
+      />
 
       {/* Meta */}
       <div className="mt-8 space-y-2 text-sm text-gray-600">
