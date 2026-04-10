@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: product.description || `Buy ${product.name} from Mirrago Fashion Nepal`,
     };
   } catch {
-    return { title: 'Product Not Found' };
+    return { title: 'Product | Mirrago Fashion Nepal' };
   }
 }
 
@@ -25,7 +25,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   try {
     productData = await api.products.get(params.slug);
   } catch {
-    notFound();
+    return <ProductNotFound slug={params.slug} />;
   }
 
   const { product, variants } = productData;
@@ -76,6 +76,21 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         productSlug={product.slug}
         category={product.category}
       />
+    </div>
+  );
+}
+
+function ProductNotFound({ slug }: { slug: string }) {
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+      <p className="text-6xl mb-4">🔍</p>
+      <h1 className="text-2xl font-bold text-nepal-blue mb-2">Product Not Available</h1>
+      <p className="text-gray-500 mb-6">
+        Could not load this product. The backend API may not be connected.
+      </p>
+      <Link href="/products" className="text-nepal-red font-semibold hover:underline">
+        ← Back to products
+      </Link>
     </div>
   );
 }

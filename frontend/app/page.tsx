@@ -1,18 +1,23 @@
-import { api } from '@/lib/api';
+'use client';
+
+import { useEffect, useState } from 'react';
 import ProductGrid from '@/components/ProductGrid';
+import { api } from '@/lib/api';
 import { ShoppingCart, Brain, Truck, Shirt } from 'lucide-react';
 
-export default async function Home() {
-  let products: any[] = [];
-  let trending: any[] = [];
-  
-  try {
-    const productsData = await api.products.list({ per_page: 8 });
-    products = productsData.data || [];
-    trending = await api.products.trending(4).catch(() => []);
-  } catch (error) {
-    console.error('Failed to fetch products:', error);
-  }
+export default function Home() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.products
+      .list({ per_page: 8 })
+      .then((res) => {
+        setProducts(res.data || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const features = [
     { icon: Brain, title: 'AI Virtual Try-On', desc: 'Try clothes virtually before buying' },
@@ -69,11 +74,18 @@ export default async function Home() {
           <p className="text-center text-gray-600 mb-12">
             Discover authentic Nepali fashion with modern AI-powered shopping
           </p>
-          {products.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 animate-pulse">Loading products...</p>
+            </div>
+          ) : products.length > 0 ? (
             <ProductGrid products={products} />
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-500">Loading products...</p>
+              <p className="text-gray-500 mb-4">Products will appear once the backend API is connected.</p>
+              <a href="/products" className="text-nepal-red font-semibold hover:underline">
+                Browse all products →
+              </a>
             </div>
           )}
         </div>
